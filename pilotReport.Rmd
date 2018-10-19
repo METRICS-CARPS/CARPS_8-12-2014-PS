@@ -1,0 +1,310 @@
+---
+title: "CARPS Reproducibility Report"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+# Report Details
+
+
+```{r}
+articleID <- "CARPS_8-12-2014-PS" # insert the article ID code here e.g., "10-3-2015_PS"
+reportType <- 'pilot' # specify whether this is the 'pilot' report or 'final' report
+pilotNames <- 'Bria Long' # insert the pilot's name here e.g., "Tom Hardwicke".  If there are multiple cpilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
+copilotNames <- NA # # insert the co-pilot's name here e.g., "Michael Frank". If there are multiple co-pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
+pilotTTC <- 180 # insert the pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
+copilotTTC <- NA # insert the co-pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
+pilotStartDate <- 10/19/2018 # insert the pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+copilotStartDate <- NA # insert the co-pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+completionDate <- NA # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+```
+
+------
+
+#### Methods summary: 
+
+The authors calculated the d'1 and d'2 for a grammatical judgement experiment in which participants gave both a response and made a confidence judgement about this response. These d'1 and d'2 values are compared in subjects who showed a d'1 performance below zero in the first 75% of trials vs. subjects who did not.
+
+The pilot attempted to reproduce the basic analyses in several ways. First, the pilot attempted to reproduce the basic descriptives using both the SPSS data file as well as the matlab output file provided by the authors. However, this was unsuccesful in reproducing the exact number of subjects in each of the critical groups used in the analyses. The pilot then reproduced the d-prime values in the same R script and also could not reproduce the number of subjects in each of the critical groups, though the d-prime values seemed to be slightly different between the R and matlab scripts, possibly due to rounding errors. In any case, the pilot requests the assistance of the authors in understandinng how exactly they made subject-level exclusions before proceeding further.
+
+------
+
+#### Target outcomes: 
+
+Figure 3 illustrates the mean d′1 and d′2 for the analysis
+trials (final 25%); results are plotted separately for participants
+who performed above chance in the selection trials
+(first 75%) and those who performed at or below chance
+in the selection trials. Analyses were conducted listwise
+to ensure that the means for each index were based on
+the same participants. Among participants who exhibited
+first-order accuracy in the selection trials, d′2 was significantly
+greater than chance, t(164) = 4.65, p < .001, d =
+0.36, and showed the typical relationship with d′1, specifically
+that the mean of d′2 is approximately half that of d′1 (Krueger, Klapoetke, & Mattler, 2011). 
+
+Crucially,among participants who did not exhibit first-order accuracy,
+d′2 remained significantly greater than chance,
+t(32) = 2.30, p = .028, d = 0.40, and was not significantly
+different from the d′2 of participants who did exhibit first order
+accuracy, t(196) = 0.17, p = .868, d = 0.03. Thus, the
+analysis revealed reliable metacognitive performance
+among participants who did not exhibit first-order decision
+accuracy
+
+------
+
+```{r global_options, include=FALSE}
+# sets up some formatting options for the R Markdown document
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+# Step 1: Load packages and prepare report object
+
+```{r}
+# load packages
+library(tidyverse) # for data munging
+library(knitr) # for kable table formating
+library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
+library(readxl) # import excel files
+library(CARPSreports) # custom report functions
+library(foreign)
+library(readxl)
+```
+
+[PILOT/COPILOT DO NOT MAKE CHANGES TO THE CODE CHUNK BELOW]
+
+```{r}
+# Prepare report object. This will be updated automatically by the reproCheck function each time values are compared
+reportObject <- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = NA, valueType = NA, percentageError = NA, comparisonOutcome = NA, eyeballCheck = NA)
+```
+
+# Step 2: Load data
+```{r}
+spss_file = "/Users/brialong/Documents/GitHub/CARPS_8-12-2014-PS/originalAnalysis/Type1and2.sav"
+spss_data = read.spss(spss_file, to.data.frame=TRUE)
+
+matlab_output_data = read_excel("/Users/brialong/Documents/GitHub/CARPS_8-12-2014-PS/data/ResultFile.xls", col_names = c("pnum","t1dp_1st3Q","t2dp_1st3Q","t1dp_lastQ","t2dp_lastQ"))
+
+d_raw = read_excel("/Users/brialong/Documents/GitHub/CARPS_8-12-2014-PS/data/RawData.xlsx")
+
+```
+
+# Step 3. Pre-process the raw data to recalculate the d-prime measurements; tidy data.
+```{r}
+trial_counts <- d_raw %>%
+  count(Pnum) %>% ## count number of trials per participation, some participants have 64 vs. 60...
+  mutate(end3Q = (n/4)*3) ## Estimate 3/4 of the way through as in author's matlab script.
+
+## Now filter by these values ad estimate d-primes
+first_3quarters_data <- d_raw %>%
+  group_by(Pnum) %>%
+  left_join(trial_counts) %>%
+  filter(PresentationOrder < end3Q) %>%
+  summarize(d1_HR_3q = sum(Judgement==1 & Grammaticality==1) / sum(Grammaticality==1),
+            d1_FA_3q = sum(Judgement==1 & Grammaticality==0) / sum(Grammaticality==0),
+            d2_HR_3q = sum(BinaryConf==1 & Accuracy==1) / sum(Accuracy==1),
+            d2_FA_3q = sum(BinaryConf==1 & Accuracy==0) / sum(Accuracy==0)) %>%
+  mutate(t1dp_1st3Q = qnorm(d1_HR_3q) - qnorm(d1_FA_3q), t2dp_1st3Q=qnorm(d2_HR_3q) - qnorm(d2_FA_3q)) 
+
+## replace infs with nans, as authors do.
+first_3quarters_data$t1dp_1st3Q[first_3quarters_data$t1dp_1st3Q==Inf | first_3quarters_data$t1dp_1st3Q==-Inf]=NaN
+
+first_3quarters_data$t2dp_1st3Q[first_3quarters_data$t2dp_1st3Q==Inf | first_3quarters_data$t2dp_1st3Q==-Inf]=NaN
+
+## repeat same process for last quarter data.
+last_quarter_data <- d_raw %>%
+  group_by(Pnum) %>%
+  left_join(trial_counts) %>%
+  filter(PresentationOrder >= end3Q) %>%
+  summarize(d1_HR_lq = sum(Judgement==1 & Grammaticality==1) / sum(Grammaticality==1),
+            d1_FA_lq = sum(Judgement==1 & Grammaticality==0) / sum(Grammaticality==0),
+            d2_HR_lq = sum(BinaryConf==1 & Accuracy==1) / sum(Accuracy==1),
+            d2_FA_lq = sum(BinaryConf==1 & Accuracy==0) / sum(Accuracy==0)) %>%
+  mutate(t1dp_lastQ = qnorm(d1_HR_lq) - qnorm(d1_FA_lq), t2dp_lastQ=qnorm(d2_HR_lq) - qnorm(d2_FA_lq)) 
+
+## replace infs with nans, as authors do.
+last_quarter_data$t1dp_lastQ[last_quarter_data$t1dp_lastQ==Inf | last_quarter_data$t1dp_lastQ==-Inf]=NaN
+##
+last_quarter_data$t2dp_lastQ[last_quarter_data$t2dp_lastQ==Inf | last_quarter_data$t2dp_lastQ==-Inf]=NaN
+
+summary_data <- last_quarter_data %>%
+  left_join(first_3quarters_data) %>%
+  rename(pnum = 'Pnum')
+
+```
+
+#### Look at correlations between the dprime values calculated in both R and in Matlab.
+Values are a bit off -- might be due to a rounding errors?
+```{r}
+# # 
+# plot(summary_data$t1dp_1st3Q, spss_data$t1dp_1st3Q)
+# plot(summary_data$t2dp_1st3Q, spss_data$t2dp_1st3Q)
+# #
+# plot(summary_data$t1dp_lastQ, spss_data$t1dp_lastQ)
+# plot(summary_data$t2dp_lastQ, spss_data$t2dp_lastQ)
+
+```
+
+# Step 4: Run analysis
+Subject-level exclusions in the following analyses taken from paper (pg.2202) "Only participants for whom both d′1 and d′2 could be computed for the analysis subset (i.e., who had nonzero counts in every cell) were included; above chance: n = 165, at chance: n = 33." However, we cannot reproduce the nunmber of subjects included in any of the analyses.
+
+```{r}
+## Those who had low accuracy in the first 3 quarters
+without_first_order_acc <- summary_data %>%
+  filter(!is.na(t1dp_1st3Q) & !is.na(t2dp_1st3Q) & !is.na(t1dp_lastQ) & !is.na(t2dp_lastQ)) %>% # exclude subjects who have a NA in any of the 4 values
+  filter(t1dp_1st3Q<=0) %>% ## d'1 is less than or equal to zero in first 3Q
+  summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_first3q = mean(t2dp_1st3Q), mean_d1_last_q=mean(t1dp_lastQ), mean_d2_last_q=mean(t2dp_lastQ))
+
+kable(without_first_order_acc)
+
+```
+
+```{r}
+## Those who had above chance accuracy in the first 3 quarters
+with_first_order_acc <- summary_data %>%
+  filter(!is.na(t1dp_1st3Q) & !is.na(t2dp_1st3Q) & !is.na(t1dp_lastQ) & !is.na(t2dp_lastQ)) %>% # exclude subjects who have a NA in any of the 4 values
+  filter(t1dp_1st3Q>0) %>% ## d'1 is greater tha zero in first 3Q
+  summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_first3q = mean(t2dp_1st3Q), mean_d1_last_q=mean(t1dp_lastQ), mean_d2_last_q=mean(t2dp_lastQ))
+
+kable(with_first_order_acc)
+
+```
+
+### Try getting calculations from the spss datafile, which already has the exclusions.
+Number of participants is still off in both cases.
+
+```{r}
+d <- spss_data
+##
+without_first_order_acc <- d %>%
+  filter(Filter1st3QzeroOrLess == "Selected" ) %>%
+  filter(!is.na(t1dp_1st3Q) & !is.na(t2dp_1st3Q) & !is.na(t1dp_lastQ) & !is.na(t2dp_lastQ)) %>%
+  summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_last_q=mean(t2dp_lastQ))
+
+kable(without_first_order_acc)
+```
+
+```{r}
+with_first_order_acc <- d %>%
+  filter(Filter1st3QgreaterThanZero == "Selected" ) %>%
+  filter(!is.na(t1dp_1st3Q) & !is.na(t2dp_1st3Q) & !is.na(t1dp_lastQ) & !is.na(t2dp_lastQ)) %>%
+  summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_last_q=mean(t2dp_lastQ))
+
+kable(with_first_order_acc)
+```
+
+
+### Try getting the descriptives/results from the matlab output file.
+Number of participants is still off in both cases, but the same as the spss discrepancies.
+```{r}
+d <- matlab_output_data
+## Create basic descriptives of two sets of participants 
+## Those who had low accuracy in the first third
+without_first_order_acc <- d %>%
+  filter(!is.na(t1dp_1st3Q) & !is.na(t2dp_1st3Q) & !is.na(t1dp_lastQ) & !is.na(t2dp_lastQ)) %>% # exclude subjects who have a NA in any of the 4 values
+  filter(t1dp_1st3Q<=0) %>% ## d'1 is less than or equal to zero in first 3Q
+  summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_first3q = mean(t2dp_1st3Q), mean_d1_last_q=mean(t1dp_lastQ), mean_d2_last_q=mean(t2dp_lastQ))
+
+kable(without_first_order_acc)
+```
+
+```{r}
+with_first_order_acc <- d %>%
+  filter(!is.na(t1dp_1st3Q) & !is.na(t2dp_1st3Q) & !is.na(t1dp_lastQ) & !is.na(t2dp_lastQ)) %>%
+  filter(t1dp_1st3Q>0) %>%
+  summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_first3q = mean(t2dp_1st3Q), mean_d1_last_q=mean(t1dp_lastQ), mean_d2_last_q=mean(t2dp_lastQ))
+
+kable(with_first_order_acc)
+```
+
+## Descriptive statistics
+
+Among participants who exhibited first-order accuracy in the selection trials, d′2 was significantly greater than chance, t(164) = 4.65, p < .001, d = 0.36
+
+Crucially,among participants who did not exhibit first-order accuracy,
+d′2 remained significantly greater than chance,
+t(32) = 2.30, p = .028, d = 0.40, 
+
+
+...and was not significantly
+different from the d′2 of participants who did exhibit first order
+accuracy, t(196) = 0.17, p = .868, d = 0.03. 
+
+
+```{r}
+```
+
+## Inferential statistics
+
+```{r}
+```
+
+# Step 5: Conclusion
+
+[Please include a text summary describing your findings. If this reproducibility check was a failure, you should note any suggestions as to what you think the likely cause(s) might be.]
+  
+[PILOT/COPILOT ENTER RELEVANT INFORMATION BELOW]
+
+```{r}
+Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
+
+Insufficient_Information_Errors <- 0 # how many discrete insufficient information issues did you encounter?
+
+# Assess the causal locus (discrete reproducibility issues) of any reproducibility errors. Note that there doesn't necessarily have to be a one-to-one correspondance between discrete reproducibility issues and reproducibility errors. For example, it could be that the original article neglects to mention that a Greenhouse-Geisser correct was applied to ANOVA outcomes. This might result in multiple reproducibility errors, but there is a single causal locus (discrete reproducibility issue).
+
+locus_typo <- NA # how many discrete issues did you encounter that related to typographical errors?
+locus_specification <- NA # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis <- NA # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data <- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified <- NA # how many discrete issues were there for which you could not identify the cause
+
+Affects_Conclusion <- NA # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? TRUE, FALSE, or NA. This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
+```
+
+[PILOT/COPILOT DOD NOT EDIT THE CODE CHUNK BELOW]
+
+```{r}
+reportObject <- reportObject %>%
+  filter(dummyRow == FALSE) %>% # remove the dummy row
+  select(-dummyRow) %>% # remove dummy row designation
+  mutate(articleID = articleID) %>% # add variables to report 
+  select(articleID, everything()) # make articleID first column
+
+# decide on final outcome
+if(any(reportObject$comparisonOutcome != "MATCH") | Insufficient_Information_Errors > 0){
+  finalOutcome <- "Failure without author assistance"
+  if(Author_Assistance == T){
+    finalOutcome <- "Failure despite author assistance"
+  }
+}else{
+  finalOutcome <- "Success without author assistance"
+  if(Author_Assistance == T){
+    finalOutcome <- "Success with author assistance"
+  }
+}
+
+# collate report extra details
+reportExtras <- data.frame(articleID, pilotNames, copilotNames, pilotTTC, copilotTTC, pilotStartDate, copilotStartDate, completionDate, Author_Assistance, finalOutcome, Insufficient_Information_Errors, locus_typo, locus_specification, locus_analysis, locus_data, locus_unidentified)
+
+# save report objects
+if(reportType == "pilot"){
+  write_csv(reportObject, "pilotReportDetailed.csv")
+  write_csv(reportExtras, "pilotReportExtras.csv")
+}
+
+if(reportType == "final"){
+  write_csv(reportObject, "finalReportDetailed.csv")
+  write_csv(reportExtras, "finalReportExtras.csv")
+}
+```
+
+# Session information
+
+[This function will output information about the package versions used in this report:]
+
+```{r session_info, include=TRUE, echo=TRUE, results='markup'}
+devtools::session_info()
+```
