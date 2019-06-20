@@ -102,7 +102,7 @@ trial_counts <- d_raw %>%
 first_3quarters_data <- d_raw %>%
   group_by(Pnum) %>%
   left_join(trial_counts) %>%
-  filter(PresentationOrder < end3Q) %>%
+  filter(PresentationOrder < end3Q+1) %>%
   summarize(d1_HR_3q = sum(Judgement==1 & Grammaticality==1) / sum(Grammaticality==1),
             d1_FA_3q = sum(Judgement==1 & Grammaticality==0) / sum(Grammaticality==0),
             d2_HR_3q = sum(BinaryConf==1 & Accuracy==1) / sum(Accuracy==1),
@@ -118,7 +118,7 @@ first_3quarters_data$t2dp_1st3Q[first_3quarters_data$t2dp_1st3Q==Inf | first_3qu
 last_quarter_data <- d_raw %>%
   group_by(Pnum) %>%
   left_join(trial_counts) %>%
-  filter(PresentationOrder >= end3Q) %>%
+  filter(PresentationOrder > end3Q) %>%
   summarize(d1_HR_lq = sum(Judgement==1 & Grammaticality==1) / sum(Grammaticality==1),
             d1_FA_lq = sum(Judgement==1 & Grammaticality==0) / sum(Grammaticality==0),
             d2_HR_lq = sum(BinaryConf==1 & Accuracy==1) / sum(Accuracy==1),
@@ -137,19 +137,22 @@ summary_data <- last_quarter_data %>%
 ```
 
 #### Look at correlations between the dprime values calculated in both R and in Matlab.
-Values are a bit off -- might be due to a rounding errors?
+Values are a bit off but pretty good -- might be due to a rounding errors?
 ```{r}
-# # 
-# plot(summary_data$t1dp_1st3Q, spss_data$t1dp_1st3Q)
+
+compare_data <- summary_data %>%
+  left_join(spss_data)
+
+plot(summary_data$t1dp_1st3Q, spss_data$t1dp_1st3Q)
 # plot(summary_data$t2dp_1st3Q, spss_data$t2dp_1st3Q)
-# #
+# # #
 # plot(summary_data$t1dp_lastQ, spss_data$t1dp_lastQ)
 # plot(summary_data$t2dp_lastQ, spss_data$t2dp_lastQ)
 
 ```
 
 # Step 4: Run analysis
-Subject-level exclusions in the following analyses taken from paper (pg.2202) "Only participants for whom both d′1 and d′2 could be computed for the analysis subset (i.e., who had nonzero counts in every cell) were included; above chance: n = 165, at chance: n = 33." However, we cannot reproduce the nunmber of subjects included in any of the analyses.
+Subject-level exclusions in the following analyses taken from paper (pg.2202) "Only participants for whom both d′1 and d′2 could be computed for the analysis subset (i.e., who had nonzero counts in every cell) were included; above chance: n = 165, at chance: n = 33." However, we cannot reproduce the number of subjects included in any of the analyses.
 
 ```{r}
 ## Those who had low accuracy in the first 3 quarters
@@ -220,32 +223,57 @@ with_first_order_acc <- d %>%
 kable(with_first_order_acc)
 ```
 
-## Descriptive statistics
+## Inferential statistics
+Using matlab output data provided by authors (NOT using own calcualted values!)
 
 Among participants who exhibited first-order accuracy in the selection trials, d′2 was significantly greater than chance, t(164) = 4.65, p < .001, d = 0.36
 
+```{r}
+with_first_order_acc <- d %>%
+  filter(!is.na(t1dp_1st3Q) & !is.na(t2dp_1st3Q) & !is.na(t1dp_lastQ) & !is.na(t2dp_lastQ)) %>%
+  filter(t1dp_1st3Q>0)
+
+
+out = t.test(with_first_order_acc$t2dp_lastQ)
+reportObject <- reproCheck(reportedValue = '4.65', obtainedValue = out$statistic, valueType = 't')
+reportObject <- reproCheck(reportedValue = '.001', obtainedValue = out$p.value, valueType = 'p', eyeballCheck=TRUE)
+reportObject <- reproCheck(reportedValue = '164', obtainedValue = out$parameter, valueType = 'df')
+
+```
+
 Crucially,among participants who did not exhibit first-order accuracy,
 d′2 remained significantly greater than chance,
-t(32) = 2.30, p = .028, d = 0.40, 
+t(32) = 2.30, p = .028, d = 0.40
+
+```{r}
+without_first_order_acc <- d %>%
+  filter(!is.na(t1dp_1st3Q) & !is.na(t2dp_1st3Q) & !is.na(t1dp_lastQ) & !is.na(t2dp_lastQ)) %>%
+  filter(t1dp_1st3Q<=0)
+
+
+out = t.test(without_first_order_acc$t2dp_lastQ)
+reportObject <- reproCheck(reportedValue = '2.30', obtainedValue = out$statistic, valueType = 't')
+reportObject <- reproCheck(reportedValue = '.028', obtainedValue = out$p.value, valueType = 'p')
+reportObject <- reproCheck(reportedValue = '32', obtainedValue = out$parameter, valueType = 'df')
+
+```
 
 
 ...and was not significantly
 different from the d′2 of participants who did exhibit first order
 accuracy, t(196) = 0.17, p = .868, d = 0.03. 
 
-
 ```{r}
-```
-
-## Inferential statistics
-
-```{r}
+out = t.test(without_first_order_acc$t2dp_lastQ, with_first_order_acc$t2dp_lastQ)
+reportObject <- reproCheck(reportedValue = '.17', obtainedValue = out$statistic, valueType = 't')
+reportObject <- reproCheck(reportedValue = '.868', obtainedValue = out$p.value, valueType = 'p')
+reportObject <- reproCheck(reportedValue = '192', obtainedValue = out$parameter, valueType = 'df')
 ```
 
 # Step 5: Conclusion
 
-[Please include a text summary describing your findings. If this reproducibility check was a failure, you should note any suggestions as to what you think the likely cause(s) might be.]
-  
+Overall, we were unable to reproduce the number of subjects included in the two main analyses, either by recalculating the values by hand or using the precomputed values provided by the authors. This is likely why were also unable to reproduce the values associated with the inferential statistics. I was also unable to assess how they calculated their effect sizes, and so have not attempted to compare them at this stage.
+
 [PILOT/COPILOT ENTER RELEVANT INFORMATION BELOW]
 
 ```{r}
