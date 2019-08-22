@@ -167,6 +167,17 @@ without_first_order_acc <- d %>%
   summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_last_q=mean(t2dp_lastQ))
 
 kable(without_first_order_acc)
+
+## COPILOT (Tom) SOLUTION - 22nd August 2019
+
+d %>%
+  filter(Filter1st3QzeroOrLess == "Selected" ) %>%
+  filter(!is.na(t1dp_lastQ) & !is.na(t2dp_lastQ)) %>% nrow()
+
+d %>%
+  filter(Filter1st3QgreaterThanZero == "Selected" ) %>%
+  filter(!is.na(t1dp_lastQ) & !is.na(t2dp_lastQ)) %>% nrow()
+
 ```
 
 ```{r}
@@ -180,7 +191,9 @@ kable(with_first_order_acc)
 
 
 ### Try getting the descriptives/results from the matlab output file.
+
 Number of participants is still off in both cases, but the same as the spss discrepancies.
+
 ```{r}
 d <- matlab_output_data
 ## Create basic descriptives of two sets of participants 
