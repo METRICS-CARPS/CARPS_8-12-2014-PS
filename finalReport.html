@@ -7,6 +7,7 @@
 <meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 
@@ -1416,48 +1417,9 @@ summary {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 
 
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -1553,10 +1515,10 @@ reportType &lt;- 'final' # specify whether this is the 'pilot' report or 'final'
 pilotNames &lt;- 'Bria Long' # insert the pilot's name here e.g., &quot;Tom Hardwicke&quot;.  If there are multiple cpilots enter both names in a character string e.g., &quot;Tom Hardwicke, Bob Dylan&quot;
 copilotNames &lt;- 'Tom Hardwicke' # # insert the co-pilot's name here e.g., &quot;Michael Frank&quot;. If there are multiple co-pilots enter both names in a character string e.g., &quot;Tom Hardwicke, Bob Dylan&quot;
 pilotTTC &lt;- 180 # insert the pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
-copilotTTC &lt;- NA # insert the co-pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
+copilotTTC &lt;- 180 # insert the co-pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
 pilotStartDate &lt;- 10/19/2018 # insert the pilot's start date in US format e.g., as.Date(&quot;01/25/18&quot;, format = &quot;%m/%d/%y&quot;)
-copilotStartDate &lt;- NA # insert the co-pilot's start date in US format e.g., as.Date(&quot;01/25/18&quot;, format = &quot;%m/%d/%y&quot;)
-completionDate &lt;- NA # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date(&quot;01/25/18&quot;, format = &quot;%m/%d/%y&quot;)</code></pre>
+copilotStartDate &lt;- 06/29/2019 # insert the co-pilot's start date in US format e.g., as.Date(&quot;01/25/18&quot;, format = &quot;%m/%d/%y&quot;)
+completionDate &lt;- 08/24/2019 # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date(&quot;01/25/18&quot;, format = &quot;%m/%d/%y&quot;)</code></pre>
 <hr />
 <div id="methods-summary" class="section level4">
 <h4>Methods summary:</h4>
@@ -1582,8 +1544,8 @@ library(knitr) # for kable table formating
 library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
 library(readxl) # import excel files
 library(CARPSreports) # custom report functions
-library(foreign)
-library(readxl)</code></pre>
+library(foreign) # read in spss files
+library(lsr)</code></pre>
 <pre class="r"><code># Prepare report object. This will be updated automatically by the reproCheck function each time values are compared
 reportObject &lt;- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = NA, valueType = NA, percentageError = NA, comparisonOutcome = NA, eyeballCheck = NA)</code></pre>
 </div>
@@ -1655,223 +1617,137 @@ plot(summary_data$t1dp_1st3Q, spss_data$t1dp_1st3Q)</code></pre>
 <h1>Step 4: Run analysis</h1>
 <p>Subject-level exclusions in the following analyses taken from paper (pg.2202) “Only participants for whom both d′1 and d′2 could be computed for the analysis subset (i.e., who had nonzero counts in every cell) were included; above chance: n = 165, at chance: n = 33.” However, we cannot reproduce the number of subjects included in any of the analyses.</p>
 <pre class="r"><code>## Those who had low accuracy in the first 3 quarters
-without_first_order_acc &lt;- summary_data %&gt;%
-  filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;% # exclude subjects who have a NA in any of the 4 values
-  filter(t1dp_1st3Q&lt;=0) %&gt;% ## d'1 is less than or equal to zero in first 3Q
-  summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_first3q = mean(t2dp_1st3Q), mean_d1_last_q=mean(t1dp_lastQ), mean_d2_last_q=mean(t2dp_lastQ))
-
-kable(without_first_order_acc)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="right">count_participants</th>
-<th align="right">mean_d1_first3q</th>
-<th align="right">mean_d2_first3q</th>
-<th align="right">mean_d1_last_q</th>
-<th align="right">mean_d2_last_q</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="right">31</td>
-<td align="right">-0.2974192</td>
-<td align="right">0.0999356</td>
-<td align="right">-0.0553662</td>
-<td align="right">0.2267557</td>
-</tr>
-</tbody>
-</table>
-<pre class="r"><code>## Those who had above chance accuracy in the first 3 quarters
-with_first_order_acc &lt;- summary_data %&gt;%
-  filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;% # exclude subjects who have a NA in any of the 4 values
-  filter(t1dp_1st3Q&gt;0) %&gt;% ## d'1 is greater tha zero in first 3Q
-  summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_first3q = mean(t2dp_1st3Q), mean_d1_last_q=mean(t1dp_lastQ), mean_d2_last_q=mean(t2dp_lastQ))
-
-kable(with_first_order_acc)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="right">count_participants</th>
-<th align="right">mean_d1_first3q</th>
-<th align="right">mean_d2_first3q</th>
-<th align="right">mean_d1_last_q</th>
-<th align="right">mean_d2_last_q</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="right">161</td>
-<td align="right">0.6658315</td>
-<td align="right">0.2335947</td>
-<td align="right">0.3674539</td>
-<td align="right">0.2122127</td>
-</tr>
-</tbody>
-</table>
+# without_first_order_acc &lt;- summary_data %&gt;%
+#   filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;% # exclude subjects who have a NA in any of the 4 values
+#   filter(t1dp_1st3Q&lt;=0) %&gt;% ## d'1 is less than or equal to zero in first 3Q
+#   summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_first3q = mean(t2dp_1st3Q), mean_d1_last_q=mean(t1dp_lastQ), mean_d2_last_q=mean(t2dp_lastQ))
+# 
+# kable(without_first_order_acc)</code></pre>
+<pre class="r"><code># ## Those who had above chance accuracy in the first 3 quarters
+# with_first_order_acc &lt;- summary_data %&gt;%
+#   filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;% # exclude subjects who have a NA in any of the 4 values
+#   filter(t1dp_1st3Q&gt;0) %&gt;% ## d'1 is greater tha zero in first 3Q
+#   summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_first3q = mean(t2dp_1st3Q), mean_d1_last_q=mean(t1dp_lastQ), mean_d2_last_q=mean(t2dp_lastQ))
+# 
+# kable(with_first_order_acc)</code></pre>
 <div id="try-getting-calculations-from-the-spss-datafile-which-already-has-the-exclusions." class="section level3">
 <h3>Try getting calculations from the spss datafile, which already has the exclusions.</h3>
 <p>Number of participants is still off in both cases.</p>
-<pre class="r"><code>d &lt;- spss_data
-##
-without_first_order_acc &lt;- d %&gt;%
-  filter(Filter1st3QzeroOrLess == &quot;Selected&quot; ) %&gt;%
-  filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;%
-  summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_last_q=mean(t2dp_lastQ))
-
-kable(without_first_order_acc)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="right">count_participants</th>
-<th align="right">mean_d1_first3q</th>
-<th align="right">mean_d2_last_q</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="right">31</td>
-<td align="right">-0.2974192</td>
-<td align="right">0.2267557</td>
-</tr>
-</tbody>
-</table>
-<pre class="r"><code>with_first_order_acc &lt;- d %&gt;%
-  filter(Filter1st3QgreaterThanZero == &quot;Selected&quot; ) %&gt;%
-  filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;%
-  summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_last_q=mean(t2dp_lastQ))
-
-kable(with_first_order_acc)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="right">count_participants</th>
-<th align="right">mean_d1_first3q</th>
-<th align="right">mean_d2_last_q</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="right">161</td>
-<td align="right">0.6658315</td>
-<td align="right">0.2122127</td>
-</tr>
-</tbody>
-</table>
+<pre class="r"><code># d &lt;- spss_data
+# ##
+# without_first_order_acc &lt;- d %&gt;%
+#   filter(Filter1st3QzeroOrLess == &quot;Selected&quot; ) %&gt;%
+#   filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;%
+#   summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_last_q=mean(t2dp_lastQ))
+# 
+# kable(without_first_order_acc)</code></pre>
+<pre class="r"><code># with_first_order_acc &lt;- d %&gt;%
+#   filter(Filter1st3QgreaterThanZero == &quot;Selected&quot; ) %&gt;%
+#   filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;%
+#   summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_last_q=mean(t2dp_lastQ))
+# 
+# kable(with_first_order_acc)</code></pre>
 </div>
 <div id="try-getting-the-descriptivesresults-from-the-matlab-output-file." class="section level3">
 <h3>Try getting the descriptives/results from the matlab output file.</h3>
 <p>Number of participants is still off in both cases, but the same as the spss discrepancies.</p>
-<pre class="r"><code>d &lt;- matlab_output_data
-## Create basic descriptives of two sets of participants 
-## Those who had low accuracy in the first third
-without_first_order_acc &lt;- d %&gt;%
-  filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;% # exclude subjects who have a NA in any of the 4 values
-  filter(t1dp_1st3Q&lt;=0) %&gt;% ## d'1 is less than or equal to zero in first 3Q
-  summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_first3q = mean(t2dp_1st3Q), mean_d1_last_q=mean(t1dp_lastQ), mean_d2_last_q=mean(t2dp_lastQ))
+<pre class="r"><code># d &lt;- matlab_output_data
+# ## Create basic descriptives of two sets of participants 
+# ## Those who had low accuracy in the first third
+# without_first_order_acc &lt;- d %&gt;%
+#   filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;% # exclude subjects who have a NA in any of the 4 values
+#   filter(t1dp_1st3Q&lt;=0) %&gt;% ## d'1 is less than or equal to zero in first 3Q
+#   summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_first3q = mean(t2dp_1st3Q), mean_d1_last_q=mean(t1dp_lastQ), mean_d2_last_q=mean(t2dp_lastQ))
+# 
+# kable(without_first_order_acc)</code></pre>
+<pre class="r"><code># with_first_order_acc &lt;- d %&gt;%
+#   filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;%
+#   filter(t1dp_1st3Q&gt;0) %&gt;%
+#   summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_first3q = mean(t2dp_1st3Q), mean_d1_last_q=mean(t1dp_lastQ), mean_d2_last_q=mean(t2dp_lastQ))
+# 
+# kable(with_first_order_acc)</code></pre>
+</div>
+<div id="analysis-after-corresponding-with-the-authors---22nd-august-2019" class="section level3">
+<h3>Analysis after corresponding with the authors - 22nd August 2019</h3>
+<pre class="r"><code>## COPILOT (Tom) SOLUTION - 22nd August 2019
+## Following author correspondance - the authors sent a video of them performing the analysis in SPSS - we recognized that we were performing an analysis in a different way to them. Specifically, they were applying the filter, and then removing cases with missing values in the t1dp_lastQ and t2dp_lastQ columns whereas we were applying the filter, and then removing cases with missing values in any of the four columns t1dp_lastQ, t2dp_lastQ, d$t1dp_1st3Q, and d$t2dp_1st3Q. This was our understanding of the sentence below from the paper:
+## &quot;Only participants for whom both d′1 and d′2 could be computed for the analysis subset (i.e., who had nonzero counts in every cell) were included; above chance: n = 165, at chance: n = 33.&quot;
 
-kable(without_first_order_acc)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="right">count_participants</th>
-<th align="right">mean_d1_first3q</th>
-<th align="right">mean_d2_first3q</th>
-<th align="right">mean_d1_last_q</th>
-<th align="right">mean_d2_last_q</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="right">31</td>
-<td align="right">-0.2974192</td>
-<td align="right">0.0999356</td>
-<td align="right">-0.0553662</td>
-<td align="right">0.2267557</td>
-</tr>
-</tbody>
-</table>
-<pre class="r"><code>with_first_order_acc &lt;- d %&gt;%
-  filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;%
-  filter(t1dp_1st3Q&gt;0) %&gt;%
-  summarize(count_participants = length(unique(pnum)), mean_d1_first3q = mean(t1dp_1st3Q),  mean_d2_first3q = mean(t2dp_1st3Q), mean_d1_last_q=mean(t1dp_lastQ), mean_d2_last_q=mean(t2dp_lastQ))
+without_first_order_acc &lt;- spss_data %&gt;%
+  filter(Filter1st3QzeroOrLess == &quot;Selected&quot; ) %&gt;%
+  filter(!is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ))
 
-kable(with_first_order_acc)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="right">count_participants</th>
-<th align="right">mean_d1_first3q</th>
-<th align="right">mean_d2_first3q</th>
-<th align="right">mean_d1_last_q</th>
-<th align="right">mean_d2_last_q</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="right">161</td>
-<td align="right">0.6658315</td>
-<td align="right">0.2335947</td>
-<td align="right">0.3674539</td>
-<td align="right">0.2122127</td>
-</tr>
-</tbody>
-</table>
+without_first_order_acc %&gt;% nrow()</code></pre>
+<pre><code>## [1] 33</code></pre>
+<pre class="r"><code>with_first_order_acc &lt;- spss_data %&gt;%
+  filter(Filter1st3QgreaterThanZero == &quot;Selected&quot; ) %&gt;%
+  filter(!is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ))
+
+with_first_order_acc %&gt;% nrow()</code></pre>
+<pre><code>## [1] 165</code></pre>
 </div>
 <div id="inferential-statistics" class="section level2">
 <h2>Inferential statistics</h2>
-<p>Using matlab output data provided by authors (NOT using own calcualted values!)</p>
-<p>Among participants who exhibited first-order accuracy in the selection trials, d′2 was significantly greater than chance, t(164) = 4.65, p &lt; .001, d = 0.36</p>
-<pre class="r"><code>with_first_order_acc &lt;- d %&gt;%
-  filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;%
-  filter(t1dp_1st3Q&gt;0)
-
-
-out = t.test(with_first_order_acc$t2dp_lastQ)
+<p>“Among participants who exhibited first-order accuracy in the selection trials, d′2 was significantly greater than chance, t(164) = 4.65, p &lt; .001, d = 0.36”</p>
+<pre class="r"><code>out &lt;- t.test(with_first_order_acc$t2dp_lastQ)
+out$d &lt;- cohensD(with_first_order_acc$t2dp_lastQ)
 reportObject &lt;- reproCheck(reportedValue = '4.65', obtainedValue = out$statistic, valueType = 't')</code></pre>
-<pre><code>## [1] &quot;MINOR_ERROR for t. The reported value (4.65) and the obtained value (4.5) differed by 3.23%. Note that the obtained value was rounded to 2 decimal places to match the reported value.&quot;</code></pre>
+<pre><code>## [1] &quot;MINOR_ERROR for t. The reported value (4.65) and the obtained value (4.64) differed by 0.22%. Note that the obtained value was rounded to 2 decimal places to match the reported value.&quot;</code></pre>
 <pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = '.001', obtainedValue = out$p.value, valueType = 'p', eyeballCheck=TRUE)</code></pre>
 <pre><code>## [1] &quot;MATCH for p. Eyeball comparison only.&quot;</code></pre>
 <pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = '164', obtainedValue = out$parameter, valueType = 'df')</code></pre>
-<pre><code>## [1] &quot;MINOR_ERROR for df. The reported value (164) and the obtained value (160) differed by 2.44%. Note that the obtained value was rounded to 0 decimal places to match the reported value.&quot;</code></pre>
-<p>Crucially,among participants who did not exhibit first-order accuracy, d′2 remained significantly greater than chance, t(32) = 2.30, p = .028, d = 0.40</p>
-<pre class="r"><code>without_first_order_acc &lt;- d %&gt;%
-  filter(!is.na(t1dp_1st3Q) &amp; !is.na(t2dp_1st3Q) &amp; !is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ)) %&gt;%
-  filter(t1dp_1st3Q&lt;=0)
-
-
-out = t.test(without_first_order_acc$t2dp_lastQ)
+<pre><code>## [1] &quot;MATCH for df. The reported value (164) and the obtained value (164) differed by 0%. Note that the obtained value was rounded to 0 decimal places to match the reported value.&quot;</code></pre>
+<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = '0.36', obtainedValue = out$d, valueType = 'd')</code></pre>
+<pre><code>## [1] &quot;MATCH for d. The reported value (0.36) and the obtained value (0.36) differed by 0%. Note that the obtained value was rounded to 2 decimal places to match the reported value.&quot;</code></pre>
+<p>“Crucially,among participants who did not exhibit first-order accuracy, d′2 remained significantly greater than chance, t(32) = 2.30, p = .028, d = 0.40”</p>
+<pre class="r"><code>out &lt;- t.test(without_first_order_acc$t2dp_lastQ)
+out$d &lt;- cohensD(without_first_order_acc$t2dp_lastQ)
 reportObject &lt;- reproCheck(reportedValue = '2.30', obtainedValue = out$statistic, valueType = 't')</code></pre>
-<pre><code>## [1] &quot;MINOR_ERROR for t. The reported value (2.3) and the obtained value (2.17) differed by 5.65%. Note that the obtained value was rounded to 2 decimal places to match the reported value.&quot;</code></pre>
+<pre><code>## [1] &quot;MATCH for t. The reported value (2.3) and the obtained value (2.3) differed by 0%. Note that the obtained value was rounded to 2 decimal places to match the reported value.&quot;</code></pre>
 <pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = '.028', obtainedValue = out$p.value, valueType = 'p')</code></pre>
-<pre><code>## [1] &quot;MAJOR_ERROR for p. The reported value (0.028) and the obtained value (0.038) differed by 35.71%. Note that the obtained value was rounded to 3 decimal places to match the reported value.&quot;</code></pre>
+<pre><code>## [1] &quot;MATCH for p. The reported value (0.028) and the obtained value (0.028) differed by 0%. Note that the obtained value was rounded to 3 decimal places to match the reported value.&quot;</code></pre>
 <pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = '32', obtainedValue = out$parameter, valueType = 'df')</code></pre>
-<pre><code>## [1] &quot;MINOR_ERROR for df. The reported value (32) and the obtained value (30) differed by 6.25%. Note that the obtained value was rounded to 0 decimal places to match the reported value.&quot;</code></pre>
-<p>…and was not significantly different from the d′2 of participants who did exhibit first order accuracy, t(196) = 0.17, p = .868, d = 0.03.</p>
-<pre class="r"><code>out = t.test(without_first_order_acc$t2dp_lastQ, with_first_order_acc$t2dp_lastQ)
+<pre><code>## [1] &quot;MATCH for df. The reported value (32) and the obtained value (32) differed by 0%. Note that the obtained value was rounded to 0 decimal places to match the reported value.&quot;</code></pre>
+<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = '0.40', obtainedValue = out$d, valueType = 'd')</code></pre>
+<pre><code>## [1] &quot;MATCH for d. The reported value (0.4) and the obtained value (0.4) differed by 0%. Note that the obtained value was rounded to 2 decimal places to match the reported value.&quot;</code></pre>
+<p>“…and was not significantly different from the d′2 of participants who did exhibit first order accuracy, t(196) = 0.17, p = .868, d = 0.03.”</p>
+<pre class="r"><code>out &lt;- t.test(without_first_order_acc$t2dp_lastQ, with_first_order_acc$t2dp_lastQ, var.equal = T)
+out$d &lt;- cohensD(without_first_order_acc$t2dp_lastQ, with_first_order_acc$t2dp_lastQ)
 reportObject &lt;- reproCheck(reportedValue = '.17', obtainedValue = out$statistic, valueType = 't')</code></pre>
-<pre><code>## [1] &quot;MAJOR_ERROR for t. The reported value (0.17) and the obtained value (0.13) differed by 23.53%. Note that the obtained value was rounded to 2 decimal places to match the reported value.&quot;</code></pre>
+<pre><code>## [1] &quot;MAJOR_ERROR for t. The reported value (0.17) and the obtained value (0.12) differed by 29.41%. Note that the obtained value was rounded to 2 decimal places to match the reported value.&quot;</code></pre>
 <pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = '.868', obtainedValue = out$p.value, valueType = 'p')</code></pre>
-<pre><code>## [1] &quot;MINOR_ERROR for p. The reported value (0.868) and the obtained value (0.9) differed by 3.69%. Note that the obtained value was rounded to 3 decimal places to match the reported value.&quot;</code></pre>
-<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = '192', obtainedValue = out$parameter, valueType = 'df')</code></pre>
-<pre><code>## [1] &quot;MAJOR_ERROR for df. The reported value (192) and the obtained value (43) differed by 77.6%. Note that the obtained value was rounded to 0 decimal places to match the reported value.&quot;</code></pre>
+<pre><code>## [1] &quot;MINOR_ERROR for p. The reported value (0.868) and the obtained value (0.908) differed by 4.61%. Note that the obtained value was rounded to 3 decimal places to match the reported value.&quot;</code></pre>
+<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = '196', obtainedValue = out$parameter, valueType = 'df')</code></pre>
+<pre><code>## [1] &quot;MATCH for df. The reported value (196) and the obtained value (196) differed by 0%. Note that the obtained value was rounded to 0 decimal places to match the reported value.&quot;</code></pre>
+<pre class="r"><code>reportObject &lt;- reproCheck(reportedValue = '0.03', obtainedValue = out$d, valueType = 'd')</code></pre>
+<pre><code>## [1] &quot;MAJOR_ERROR for d. The reported value (0.03) and the obtained value (0.02) differed by 33.33%. Note that the obtained value was rounded to 2 decimal places to match the reported value.&quot;</code></pre>
+<p>We have two “major errors” here. We contacted the authors and they said they also could not reproduce these values - in their own reanalysis they obtain the same values as we do here. The reason for the differences is unknown. The authors suggest it might be due to change in version of the SPSS software that was used to run the original analysis. Although they reach the 10% threshold of a reproducibiltiy issues according to our operational definition, these differences are clearly not consequential to the authors’ original conclusions.</p>
 </div>
 </div>
 <div id="step-5-conclusion" class="section level1">
 <h1>Step 5: Conclusion</h1>
-<p>The pilot attempted to reproduce the basic analyses in several ways. First, the pilot attempted to reproduce the basic descriptives using both the SPSS data file as well as the matlab output file provided by the authors. However, this was unsuccesful in reproducing the exact number of subjects in each of the critical groups used in the analyses. The pilot then reproduced the d-prime values in the same R script and also could not reproduce the number of subjects in each of the critical groups, though the d-prime values seemed to be slightly different between the R and matlab scripts, possibly due to rounding errors. In any case, the pilot requests the assistance of the authors in understandinng how exactly they made subject-level exclusions before proceeding further.</p>
-<pre class="r"><code>Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
+<p>We initially ran into a problem reproducing the exclusions reported in the paper. We used both the SPSS and Matlab files provided by the authors and attempted to apply the exclusions in several different ways. As all were unsuccessful, we contacted the original authors to ask for assistance. They created a video of themselves performing the analysis in SPSS and reproducing the exclusion numbers reported in the paper. Watching this video helped us to identify that we had misunderstood the sentence that reported the exlcusions, specifically: “Only participants for whom both d′1 and d′2 could be computed for the analysis subset (i.e., who had nonzero counts in every cell) were included; above chance: n = 165, at chance: n = 33.” We had excluded participants with missing values in any of the cells, whereas the original analysis excluded participants with missing values in cells relevant to the analysis subset. After being sent the video, we were able to reproduce this part of the analysis successfully and proceeded with the remainder of the analysis.</p>
+<p>We were unable to reproduce two values - a t-value (0.17 reported vs. 0.12 in our analysis) and a d-value (0.03 reported vs.0.02 in our analysis). We contacted the authors again and they said they also could not reproduce these values - in their own reanalysis they obtain the same values as we do here. The reason for the differences is unknown. The authors suggest it might be due to change in version of the SPSS software that was used to run the original analysis. Although they reach the 10% threshold of a reproducibiltiy issues according to our operational definition, these differences are clearly not consequential to the authors’ original conclusions.</p>
+<pre class="r"><code>Author_Assistance = TRUE # was author assistance provided? (if so, enter TRUE)
 
 Insufficient_Information_Errors &lt;- 0 # how many discrete insufficient information issues did you encounter?
 
 # Assess the causal locus (discrete reproducibility issues) of any reproducibility errors. Note that there doesn't necessarily have to be a one-to-one correspondance between discrete reproducibility issues and reproducibility errors. For example, it could be that the original article neglects to mention that a Greenhouse-Geisser correct was applied to ANOVA outcomes. This might result in multiple reproducibility errors, but there is a single causal locus (discrete reproducibility issue).
 
-locus_typo &lt;- NA # how many discrete issues did you encounter that related to typographical errors?
-locus_specification &lt;- NA # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
-locus_analysis &lt;- NA # how many discrete issues did you encounter that related to errors in the authors' original analyses?
-locus_data &lt;- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
-locus_unidentified &lt;- NA # how many discrete issues were there for which you could not identify the cause
+locus_typo &lt;- 0 # how many discrete issues did you encounter that related to typographical errors?
+locus_specification &lt;- 0 # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis &lt;- 0 # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data &lt;- 0 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified &lt;- 1 # how many discrete issues were there for which you could not identify the cause
 
-Affects_Conclusion &lt;- NA # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? TRUE, FALSE, or NA. This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.</code></pre>
+# How many of the above issues were resolved through author assistance?
+locus_typo_resolved &lt;- 0 # how many discrete issues did you encounter that related to typographical errors?
+locus_specification_resolved &lt;- 1 # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis_resolved &lt;- 0 # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data_resolved &lt;- 0 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified_resolved &lt;- 0 # how many discrete issues were there for which you could not identify the cause
+
+Affects_Conclusion &lt;- FALSE # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? TRUE, FALSE, or NA. This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.</code></pre>
 <pre class="r"><code>reportObject &lt;- reportObject %&gt;%
   filter(dummyRow == FALSE) %&gt;% # remove the dummy row
   select(-dummyRow) %&gt;% # remove dummy row designation
@@ -1879,7 +1755,7 @@ Affects_Conclusion &lt;- NA # Do any reproducibility issues encounter appear to 
   select(articleID, everything()) # make articleID first column
 
 # decide on final outcome
-if(any(reportObject$comparisonOutcome != &quot;MATCH&quot;) | Insufficient_Information_Errors &gt; 0){
+if(any(reportObject$comparisonOutcome %in% c(&quot;MAJOR_ERROR&quot;, &quot;DECISION_ERROR&quot;)) | Insufficient_Information_Errors &gt; 0){
   finalOutcome &lt;- &quot;Failure without author assistance&quot;
   if(Author_Assistance == T){
     finalOutcome &lt;- &quot;Failure despite author assistance&quot;
@@ -1892,7 +1768,7 @@ if(any(reportObject$comparisonOutcome != &quot;MATCH&quot;) | Insufficient_Infor
 }
 
 # collate report extra details
-reportExtras &lt;- data.frame(articleID, pilotNames, copilotNames, pilotTTC, copilotTTC, pilotStartDate, copilotStartDate, completionDate, Author_Assistance, finalOutcome, Insufficient_Information_Errors, locus_typo, locus_specification, locus_analysis, locus_data, locus_unidentified)
+reportExtras &lt;- data.frame(articleID, pilotNames, copilotNames, pilotTTC, copilotTTC, pilotStartDate, copilotStartDate, completionDate, Author_Assistance, finalOutcome, Insufficient_Information_Errors, locus_typo, locus_specification, locus_analysis, locus_data, locus_unidentified, locus_typo_resolved, locus_specification_resolved, locus_analysis_resolved, locus_data_resolved, locus_unidentified_resolved)
 
 # save report objects
 if(reportType == &quot;pilot&quot;){
@@ -1907,19 +1783,18 @@ if(reportType == &quot;final&quot;){
 </div>
 <div id="session-information" class="section level1">
 <h1>Session information</h1>
-<p>[This function will output information about the package versions used in this report:]</p>
 <pre class="r"><code>devtools::session_info()</code></pre>
 <pre><code>## ─ Session info ──────────────────────────────────────────────────────────
 ##  setting  value                       
 ##  version  R version 3.6.0 (2019-04-26)
-##  os       macOS Mojave 10.14.4        
+##  os       macOS Mojave 10.14.6        
 ##  system   x86_64, darwin15.6.0        
 ##  ui       X11                         
 ##  language (EN)                        
 ##  collate  en_US.UTF-8                 
 ##  ctype    en_US.UTF-8                 
 ##  tz       Europe/Berlin               
-##  date     2019-06-20                  
+##  date     2019-08-24                  
 ## 
 ## ─ Packages ──────────────────────────────────────────────────────────────
 ##  package      * version date       lib
@@ -1934,32 +1809,32 @@ if(reportType == &quot;final&quot;){
 ##  crayon         1.3.4   2017-09-16 [1]
 ##  desc           1.2.0   2018-05-01 [1]
 ##  devtools       2.0.2   2019-04-08 [1]
-##  digest         0.6.19  2019-05-20 [1]
-##  dplyr        * 0.8.1   2019-05-14 [1]
+##  digest         0.6.20  2019-07-04 [1]
+##  dplyr        * 0.8.3   2019-07-04 [1]
 ##  evaluate       0.14    2019-05-28 [1]
 ##  forcats      * 0.4.0   2019-02-17 [1]
 ##  foreign      * 0.8-71  2018-07-20 [1]
-##  fs             1.2.7   2019-03-19 [1]
+##  fs             1.3.1   2019-05-06 [1]
 ##  generics       0.0.2   2018-11-29 [1]
 ##  ggplot2      * 3.1.1   2019-04-07 [1]
 ##  glue           1.3.1   2019-03-12 [1]
 ##  gtable         0.3.0   2019-03-25 [1]
 ##  haven        * 2.1.0   2019-02-19 [1]
-##  highr          0.8     2019-03-20 [1]
 ##  hms            0.4.2   2018-03-10 [1]
 ##  htmltools      0.3.6   2017-04-28 [1]
-##  httr           1.4.0   2018-12-11 [1]
+##  httr           1.4.1   2019-08-05 [1]
 ##  jsonlite       1.6     2018-12-07 [1]
-##  knitr        * 1.23    2019-05-18 [1]
+##  knitr        * 1.24    2019-08-08 [1]
 ##  lattice        0.20-38 2018-11-04 [1]
 ##  lazyeval       0.2.2   2019-03-15 [1]
+##  lsr          * 0.5     2015-03-02 [1]
 ##  lubridate      1.7.4   2018-04-11 [1]
 ##  magrittr       1.5     2014-11-22 [1]
 ##  memoise        1.1.0   2017-04-21 [1]
 ##  modelr         0.1.4   2019-02-18 [1]
 ##  munsell        0.5.0   2018-06-12 [1]
 ##  nlme           3.1-139 2019-04-09 [1]
-##  pillar         1.4.1   2019-05-28 [1]
+##  pillar         1.4.2   2019-06-29 [1]
 ##  pkgbuild       1.0.3   2019-03-20 [1]
 ##  pkgconfig      2.0.2   2018-08-16 [1]
 ##  pkgload        1.0.2   2018-10-29 [1]
@@ -1969,12 +1844,12 @@ if(reportType == &quot;final&quot;){
 ##  ps             1.3.0   2018-12-21 [1]
 ##  purrr        * 0.3.2   2019-03-15 [1]
 ##  R6             2.4.0   2019-02-14 [1]
-##  Rcpp           1.0.1   2019-03-17 [1]
+##  Rcpp           1.0.2   2019-07-25 [1]
 ##  readr        * 1.3.1   2018-12-21 [1]
 ##  readxl       * 1.3.1   2019-03-13 [1]
 ##  remotes        2.0.4   2019-04-10 [1]
-##  rlang          0.3.4   2019-04-07 [1]
-##  rmarkdown      1.13    2019-05-22 [1]
+##  rlang          0.4.0   2019-06-25 [1]
+##  rmarkdown      1.14    2019-07-12 [1]
 ##  rprojroot      1.3-2   2018-01-03 [1]
 ##  rstudioapi     0.10    2019-03-19 [1]
 ##  rvest          0.3.3   2019-04-11 [1]
@@ -1982,14 +1857,14 @@ if(reportType == &quot;final&quot;){
 ##  sessioninfo    1.1.1   2018-11-05 [1]
 ##  stringi        1.4.3   2019-03-12 [1]
 ##  stringr      * 1.4.0   2019-02-10 [1]
-##  testthat       2.1.1   2019-04-23 [1]
-##  tibble       * 2.1.2   2019-05-29 [1]
+##  testthat       2.2.1   2019-07-25 [1]
+##  tibble       * 2.1.3   2019-06-06 [1]
 ##  tidyr        * 0.8.3   2019-03-01 [1]
 ##  tidyselect     0.2.5   2018-10-11 [1]
 ##  tidyverse    * 1.2.1   2017-11-14 [1]
 ##  usethis        1.5.0   2019-04-07 [1]
 ##  withr          2.1.2   2018-03-15 [1]
-##  xfun           0.7     2019-05-14 [1]
+##  xfun           0.8     2019-06-25 [1]
 ##  xml2           1.2.0   2018-01-24 [1]
 ##  yaml           2.2.0   2018-07-25 [1]
 ##  source                                     
@@ -2084,6 +1959,49 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
