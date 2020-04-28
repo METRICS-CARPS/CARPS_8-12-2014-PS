@@ -1,2 +1,2 @@
 articleID,pilotNames,copilotNames,pilotTTC,copilotTTC,pilotStartDate,copilotStartDate,completionDate,Author_Assistance,finalOutcome,Insufficient_Information_Errors,locus_typo,locus_specification,locus_analysis,locus_data,locus_unidentified,locus_typo_resolved,locus_specification_resolved,locus_analysis_resolved,locus_data_resolved,locus_unidentified_resolved
-CARPS_8-12-2014-PS,Bria Long,Tom Hardwicke,180,180,2.6081059934275727e-4,1.0247476558897371e-4,1.6509823344890208e-4,TRUE,Failure despite author assistance,0,0,0,0,0,1,0,1,0,0,0
+8-12-2014_PS,Bria Long,Tom Hardwicke,180,180,2020-10-19,2020-06-29,2020-08-24,TRUE,Failure despite author assistance,0,0,0,0,0,1,0,1,0,0,0
