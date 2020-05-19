@@ -1549,7 +1549,6 @@ library(knitr) # for kable table formating
 library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
 library(readxl) # import excel files
 library(ReproReports) # custom report functions
-library(foreign) # read in spss files
 library(lsr)</code></pre>
 <pre class="r"><code># Prepare report object. This will be updated automatically by the reproCheck function each time values are compared
 reportObject &lt;- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = NA, valueType = NA, percentageError = NA, comparisonOutcome = NA, eyeballCheck = NA)</code></pre>
@@ -1557,7 +1556,7 @@ reportObject &lt;- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue
 <div id="step-2-load-data" class="section level1">
 <h1>Step 2: Load data</h1>
 <pre class="r"><code>spss_file = &quot;originalAnalysis/Type1and2.sav&quot;
-spss_data = read.spss(spss_file, to.data.frame=TRUE)
+spss_data = read_spss(spss_file)
 
 matlab_output_data = read_excel(&quot;data/ResultFile.xls&quot;, col_names = c(&quot;pnum&quot;,&quot;t1dp_1st3Q&quot;,&quot;t2dp_1st3Q&quot;,&quot;t1dp_lastQ&quot;,&quot;t2dp_lastQ&quot;))
 
@@ -1679,13 +1678,13 @@ plot(summary_data$t1dp_1st3Q, spss_data$t1dp_1st3Q)</code></pre>
 ## &quot;Only participants for whom both d′1 and d′2 could be computed for the analysis subset (i.e., who had nonzero counts in every cell) were included; above chance: n = 165, at chance: n = 33.&quot;
 
 without_first_order_acc &lt;- spss_data %&gt;%
-  filter(Filter1st3QzeroOrLess == &quot;Selected&quot; ) %&gt;%
+  filter(Filter1st3QzeroOrLess == 1 ) %&gt;%
   filter(!is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ))
 
 without_first_order_acc %&gt;% nrow()</code></pre>
 <pre><code>## [1] 33</code></pre>
 <pre class="r"><code>with_first_order_acc &lt;- spss_data %&gt;%
-  filter(Filter1st3QgreaterThanZero == &quot;Selected&quot; ) %&gt;%
+  filter(Filter1st3QgreaterThanZero == 1 ) %&gt;%
   filter(!is.na(t1dp_lastQ) &amp; !is.na(t2dp_lastQ))
 
 with_first_order_acc %&gt;% nrow()</code></pre>
@@ -1799,7 +1798,7 @@ if(reportType == &quot;final&quot;){
 ##  collate  en_US.UTF-8                 
 ##  ctype    en_US.UTF-8                 
 ##  tz       Europe/London               
-##  date     2020-05-11                  
+##  date     2020-05-19                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package      * version date       lib
@@ -1821,7 +1820,6 @@ if(reportType == &quot;final&quot;){
 ##  evaluate       0.14    2019-05-28 [1]
 ##  fansi          0.4.1   2020-01-08 [1]
 ##  forcats      * 0.5.0   2020-03-01 [1]
-##  foreign      * 0.8-78  2020-04-13 [1]
 ##  fs             1.4.1   2020-04-04 [1]
 ##  generics       0.0.2   2018-11-29 [1]
 ##  ggplot2      * 3.3.0   2020-03-05 [1]
@@ -1878,7 +1876,6 @@ if(reportType == &quot;final&quot;){
 ##  xml2           1.3.2   2020-04-23 [1]
 ##  yaml           2.2.1   2020-02-01 [1]
 ##  source                                     
-##  CRAN (R 4.0.0)                             
 ##  CRAN (R 4.0.0)                             
 ##  CRAN (R 4.0.0)                             
 ##  CRAN (R 4.0.0)                             

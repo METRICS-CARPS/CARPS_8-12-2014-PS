@@ -51,7 +51,6 @@ library(knitr) # for kable table formating
 library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
 library(readxl) # import excel files
 library(ReproReports) # custom report functions
-library(foreign) # read in spss files
 library(lsr)
 ```
 
@@ -63,7 +62,7 @@ reportObject <- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = 
 # Step 2: Load data
 ```{r}
 spss_file = "originalAnalysis/Type1and2.sav"
-spss_data = read.spss(spss_file, to.data.frame=TRUE)
+spss_data = read_spss(spss_file)
 
 matlab_output_data = read_excel("data/ResultFile.xls", col_names = c("pnum","t1dp_1st3Q","t2dp_1st3Q","t1dp_lastQ","t2dp_lastQ"))
 
@@ -212,13 +211,13 @@ Number of participants is still off in both cases, but the same as the spss disc
 ## "Only participants for whom both d′1 and d′2 could be computed for the analysis subset (i.e., who had nonzero counts in every cell) were included; above chance: n = 165, at chance: n = 33."
 
 without_first_order_acc <- spss_data %>%
-  filter(Filter1st3QzeroOrLess == "Selected" ) %>%
+  filter(Filter1st3QzeroOrLess == 1 ) %>%
   filter(!is.na(t1dp_lastQ) & !is.na(t2dp_lastQ))
 
 without_first_order_acc %>% nrow()
 
 with_first_order_acc <- spss_data %>%
-  filter(Filter1st3QgreaterThanZero == "Selected" ) %>%
+  filter(Filter1st3QgreaterThanZero == 1 ) %>%
   filter(!is.na(t1dp_lastQ) & !is.na(t2dp_lastQ))
 
 with_first_order_acc %>% nrow()
